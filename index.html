@@ -51,16 +51,17 @@
         pointer-events: none; /* Make hidden page unclickable */
     }
 
-    /* --- New Creative Button Style --- */
+    /* --- Fully Responsive Button Style --- */
     #generate-button {
-        width: 200px;
-        height: 200px;
-        font-family: 'Pacifico', cursive; /* New font for the button */
-        font-size: 2rem; /* Adjusted font size for new font */
+        /* Use viewport width for scaling, with min/max for control */
+        width: clamp(150px, 40vw, 220px);
+        height: clamp(150px, 40vw, 220px);
+        font-family: 'Pacifico', cursive;
+        /* Responsive font size */
+        font-size: clamp(1.5rem, 8vw, 2.2rem);
         color: white;
         border: none;
         border-radius: 50%;
-        /* New color gradient for the button */
         background: linear-gradient(45deg, #60a5fa, #818cf8, #c084fc, #f472b6);
         background-size: 400% 400%;
         animation: button-gradient-animation 10s ease infinite;
@@ -93,6 +94,13 @@
     @keyframes fadeIn { 
         to { opacity: 1; transform: translateY(0);} 
     }
+    
+    /* --- Quote box responsiveness --- */
+    #quote-box {
+        width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto; /* Allow scrolling for very long quotes on small screens */
+    }
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -104,7 +112,7 @@
 
   <!-- Page 2: The Quote Display -->
   <div id="quote-page" class="page hidden">
-    <div class="text-center p-8 max-w-3xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg">
+    <div id="quote-box" class="text-center p-8 max-w-3xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg">
       <!-- Quote display -->
       <div id="quote-container" class="text-center mb-8 min-h-[150px] flex flex-col justify-center">
         <p id="quote-text" class="text-3xl md:text-4xl font-medium italic mb-4">"</p>
@@ -135,6 +143,17 @@
     // API Endpoint
     const quoteApiUrl = "https://api.quotable.io/random";
 
+    function displayQuote(quote, author) {
+        // Update UI with the new quote
+        quoteText.textContent = `"${quote}"`;
+        quoteAuthor.textContent = `— ${author}`;
+
+        // Re-trigger fade-in animation
+        quoteContainer.classList.remove("fade-in");
+        void quoteContainer.offsetWidth; // Force reflow
+        quoteContainer.classList.add("fade-in");
+    }
+
     // --- Function to Fetch a Quote ---
     async function fetchQuote(buttonToUpdate) {
       // Set loading state on the button that was clicked
@@ -148,19 +167,12 @@
         
         const data = await response.json();
         
-        // Update UI with the new quote
-        quoteText.textContent = `"${data.content || 'Could not retrieve quote text.'}"`;
-        quoteAuthor.textContent = `— ${data.author || 'Unknown'}`;
-
-        // Re-trigger fade-in animation
-        quoteContainer.classList.remove("fade-in");
-        void quoteContainer.offsetWidth; // Force reflow
-        quoteContainer.classList.add("fade-in");
+        displayQuote(data.content || 'Could not retrieve quote text.', data.author || 'Unknown');
 
       } catch (error) {
         console.error("Error fetching quote:", error);
-        quoteText.textContent = `"Failed to load quote. Please try again. 😢"`;
-        quoteAuthor.textContent = "— System";
+        // Display an error message if the fetch fails
+        displayQuote("Failed to load quote. Please try again. 😢", "System");
       } finally {
         // Restore the button's state
         buttonToUpdate.disabled = false;
