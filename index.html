@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote of the Day</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    body { 
+        font-family: 'Montserrat', sans-serif; 
+        overflow: hidden; /* Prevents scrollbars during transitions */
+        color: #374151; /* Default text color for readability */
+        /* --- New Creative Background --- */
+        background: linear-gradient(135deg, #fbcfe8, #d8b4fe, #a5b4fc, #93c5fd, #a7f3d0);
+        background-size: 500% 500%;
+        animation: background-gradient-animation 25s ease infinite;
+    }
+    
+    /* --- Set creative font for the quote text --- */
+    #quote-text {
+        font-family: 'Playfair Display', serif;
+    }
+    
+    /* --- Background Animation --- */
+    @keyframes background-gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* --- Page Container --- */
+    .page {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+
+    /* --- Page Transitions --- */
+    .page.hidden {
+        opacity: 0;
+        transform: scale(0.95);
+        pointer-events: none; /* Make hidden page unclickable */
+    }
+
+    /* --- New Creative Button Style --- */
+    #generate-button {
+        width: 200px;
+        height: 200px;
+        font-family: 'Pacifico', cursive; /* New font for the button */
+        font-size: 2rem; /* Adjusted font size for new font */
+        color: white;
+        border: none;
+        border-radius: 50%;
+        /* New color gradient for the button */
+        background: linear-gradient(45deg, #60a5fa, #818cf8, #c084fc, #f472b6);
+        background-size: 400% 400%;
+        animation: button-gradient-animation 10s ease infinite;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #generate-button:hover {
+        transform: scale(1.05) translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    #generate-button:active {
+        transform: scale(0.95);
+    }
+
+    /* --- Button Gradient Animation --- */
+    @keyframes button-gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* --- Quote Text Fade Animation --- */
+    .fade-in { 
+        opacity: 0; 
+        transform: translateY(10px); 
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+    @keyframes fadeIn { 
+        to { opacity: 1; transform: translateY(0);} 
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+  <!-- Page 1: The Main Button -->
+  <div id="home-page" class="page">
+    <button id="generate-button">Inspire Me</button>
+  </div>
+
+  <!-- Page 2: The Quote Display -->
+  <div id="quote-page" class="page hidden">
+    <div class="text-center p-8 max-w-3xl mx-auto bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg">
+      <!-- Quote display -->
+      <div id="quote-container" class="text-center mb-8 min-h-[150px] flex flex-col justify-center">
+        <p id="quote-text" class="text-3xl md:text-4xl font-medium italic mb-4">"</p>
+        <p id="quote-author" class="text-gray-600 font-semibold">— </p>
+      </div>
+
+      <!-- Button to get another quote -->
+      <button id="another-quote-button" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-lg transition-transform duration-200 transform hover:scale-105">
+        Another One
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- Page Elements ---
+    const homePage = document.getElementById('home-page');
+    const quotePage = document.getElementById('quote-page');
+    
+    // --- Button Elements ---
+    const generateButton = document.getElementById('generate-button');
+    const anotherQuoteButton = document.getElementById('another-quote-button');
+
+    // --- Quote Display Elements ---
+    const quoteContainer = document.getElementById('quote-container');
+    const quoteText = document.getElementById('quote-text');
+    const quoteAuthor = document.getElementById('quote-author');
+
+    // API Endpoint
+    const quoteApiUrl = "https://api.quotable.io/random";
+
+    // --- Function to Fetch a Quote ---
+    async function fetchQuote(buttonToUpdate) {
+      // Set loading state on the button that was clicked
+      const originalText = buttonToUpdate.textContent;
+      buttonToUpdate.disabled = true;
+      buttonToUpdate.textContent = '...';
+
+      try {
+        const response = await fetch(quoteApiUrl);
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        
+        const data = await response.json();
+        
+        // Update UI with the new quote
+        quoteText.textContent = `"${data.content || 'Could not retrieve quote text.'}"`;
+        quoteAuthor.textContent = `— ${data.author || 'Unknown'}`;
+
+        // Re-trigger fade-in animation
+        quoteContainer.classList.remove("fade-in");
+        void quoteContainer.offsetWidth; // Force reflow
+        quoteContainer.classList.add("fade-in");
+
+      } catch (error) {
+        console.error("Error fetching quote:", error);
+        quoteText.textContent = `"Failed to load quote. Please try again. 😢"`;
+        quoteAuthor.textContent = "— System";
+      } finally {
+        // Restore the button's state
+        buttonToUpdate.disabled = false;
+        buttonToUpdate.textContent = originalText;
+      }
+    }
+
+    // --- Event Listener for the main button ---
+    generateButton.addEventListener('click', async () => {
+      // Fetch the first quote
+      await fetchQuote(generateButton);
+      
+      // Transition to the quote page
+      homePage.classList.add('hidden');
+      quotePage.classList.remove('hidden');
+    });
+
+    // --- Event Listener for the "Another One" button ---
+    anotherQuoteButton.addEventListener('click', () => {
+      fetchQuote(anotherQuoteButton);
+    });
+  </script>
+</body>
+</html>
